@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  n8n-db:
+    image: postgres:16-alpine
+    container_name: n8n_db
+    hostname: n8n_db
+    ports:
+      - 5434:5432
+    environment:
+      TZ: Europe/Madrid
+      POSTGRES_DB: PG_DB
+      POSTGRES_USER: pepito
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_PORT: 5432
+    volumes:
+      - /volume1/docker/n8n_db:/var/lib/postgresql/data
+#      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U javl -d PG_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    network_mode: "bridge" # modo "bridge" es la red por defecto docker.
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: on-failure:5
+    
+    environment:
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: true #fuerza cambiar los permisos de los directorios.
+      N8N_SECURE_COOKIE: true #para acceder por "http" dejarlo en false (poner true para forzar "https")
+      N8N_HOST: tudominio.com #si no tienes dominio, debe poner la IP del contenedor.
+      N8N_PORT: 5678
+      N8N_PROTOCOL: https
+      NODE_ENV: production
+      WEBHOOK_URL: https://tudominio.com #si tienes habilitado el "https" lo tienes que poner, en caso contrario tiene que poner la IP del contenedor o "http"
+      GENERIC_TIMEZONE: Europe/Madrid
+      DATABASE_TYPE: postgres
+      DATABASE_PORT: 5434
+      DATABASE_HOST: 172.17.0.1 #la ip de la puerta de enlace predeterminada de la red bridge
+      DATABASE_NAME: PG_DB
+      DATABASE_USER: pepito
+      DATABASE_PASSWORD: 12345678
+    ports:
+      - 5678:5678
+    links:
+      - n8n-db
+    volumes:
+      - /volume1/docker/n8n:/home/node/.n8n
+    depends_on:
+      n8n-db:
+        condition: service_healthy
+    network_mode: "bridge" # modo "bridge" es la red por defecto docker.
