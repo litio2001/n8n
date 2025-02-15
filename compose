@@ -16,7 +16,7 @@ services:
       - /volume1/docker/n8n_db:/var/lib/postgresql/data
 #      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U javl -d PG_DB"]
+      test: ["CMD-SHELL", "pg_isready -U pepito -d PG_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
